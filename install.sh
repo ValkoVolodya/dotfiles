@@ -38,24 +38,8 @@ function install_packages() {
         sqlite-devel \
         util-linux-user \
         wget \
-        zlib-devel
-
-    # WM packages
-    echo "Install window manager ..."
-    sudo dnf install -y \
-        alsa-utils \
-        awesome \
-        arandr \
-        brightnessctl \
-        dunst \
-        ImageMagick \
-        i3 \
-        i3lock \
-        i3status \
-        lxpolkit \
-        vicious \
-        xcompmgr \
-        xss-lock
+        zlib-devel \
+	gnome-tweak-tool
 
     # Code editing packages
     echo "Install software for development ..."
@@ -63,8 +47,6 @@ function install_packages() {
         ctags \
         git \
         make \
-        neovim \
-        ripgrep
 
     # Editorconfig core
     cwd=$(pwd)
@@ -110,62 +92,6 @@ function install_pyenv() {
     echo "Install python interpreters ..."
     pyenv install 2.7.14
     pyenv install 3.6.6
-
-    # Create utilitary virtualenvs
-    echo "Create utilitary interpreters ..."
-    pyenv virtualenv 2.7.14 neovim-2
-    pyenv virtualenv 3.6.6 neovim-3
-
-    for py_env in 'neovim-2' 'neovim-3'; do
-        pyenv activate "${py_env}"
-        pip install -U neovim jedi
-        source deactivate || pyenv deactivate || deactivate
-    done
-}
-
-
-function install_nvm() {
-    echo "Install nvm ..."
-    local nvm_dir="$HOME/.nvm"
-    local nvm_version="v0.33.11"
-    local nvm_install_url="https://raw.githubusercontent.com"
-    nvm_install_url+="/creationix/nvm/${nvm_version}/install.sh"
-
-    if [ -d "${nvm_dir}" ]; then
-        rm -rf "${nvm_dir}"
-    fi
-
-    curl -o- "${nvm_install_url}" | bash
-
-    # activate nvm
-    export NVM_DIR="$nvm_dir"
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
-    echo "Install latest stable node ..."
-    nvm install --lts
-
-    echo "Install development packages ..."
-    nvm use default
-    npm install -g \
-        gitmoji-cli \
-        neovim \
-        prettier \
-        yarn
-
-    unset NVM_DIR
-}
-
-
-function install_sdkman() {
-    echo "Install sdkman (java toolbelt) ..."
-    local sdkman_url="https://get.sdkman.io"
-    local sdkman_dir="$HOME/.sdkman"
-
-    if [ -e "${sdkman_dir}" -o -h "${sdkman_dir}" ]; then
-        rm -rf "${sdkman_dir}"
-    fi
-
-    curl -s "${sdkman_url}" | bash
 }
 
 
@@ -174,30 +100,12 @@ function install_rustup() {
     curl https://sh.rustup.rs -sSf | sh
 }
 
-
-function install_stack() {
-    echo "Install haskell stack ..."
-    curl -sSL https://get.haskellstack.org/ | sh || stack upgrade
-    stack setup
-    stack install ghc-mod
-}
-
-
-function install_nvim() {
-    echo "Install neovim configuration ..."
-    local nvim_config_dir="$HOME/.config/nvim"
-    local vim_plug_file="$HOME/.local/share/nvim/site/autoload/plug.vim"
-
-    if [ -e "${nvim_config_dir}" -o -h "${nvim_config_dir}" ]; then
-        rm -r "${nvim_config_dir}"
-    fi
-
-    if [ ! -e "${vim_plug_file}" -a ! -h "${vim_plug_file}" ]; then
-        curl -fLo "${vim_plug_file}" --create-dirs \
-            https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
-    fi
-    ln -s "${DOT_SRC}/editors/nvim" "${nvim_config_dir}"
-    nvim -c 'PlugInstall' -c 'PlugUpgrade' -c 'PlugUpdate' -c 'qa'
+function install_elm() {
+    echo "Install elm ..."
+    dnf install node npm
+    wget "https://github.com/elm/compiler/releases/download/0.19.0/binaries-for-linux.tar.gz"
+    tar xzf binaries-for-linux.tar.gz
+    mv elm /usr/local/bin/
 }
 
 
@@ -221,40 +129,21 @@ function install_tmux() {
 }
 
 
-function install_i3() {
-    echo "Install i3 window manager configuration ..."
-    local i3_conf_dir="$HOME/.config/i3"
-    local i3status_conf_dir="$HOME/.config/i3status"
-    local dunst_conf_dir="$HOME/.config/dunst"
-    local wallpapers_dir="$HOME/.local/share/wallpapers"
-
-    for dir in \
-        "${i3_conf_dir}" \
-        "${i3status_conf_dir}" \
-        "${dunst_conf_dir}" \
-        "${wallpapers_dir}"
-    do
-        if [ -e "${dir}" -o -h "${dir}" ]; then
-            rm -r "${dir}"
-        fi
-    done
-
-    ln -s "${DOT_SRC}/wm/wallpapers" "${wallpapers_dir}"
-    ln -s "${DOT_SRC}/wm/i3" "${i3_conf_dir}"
-    ln -s "${DOT_SRC}/wm/i3status" "${i3status_conf_dir}"
-    ln -s "${DOT_SRC}/wm/dunst" "${dunst_conf_dir}"
+function install_oh_my_tmux() {
+   echo "Install .tmux aka Oh My Tmux! ..."
+   export $TERM="xterm-256color"
+   export $EDITOR="vim"
+   cd
+   git clone https://github.com/gpakosz/.tmux.git
+   ln -s -f .tmux/.tmux.conf
+   cp .tmux/.tmux.conf.local .
 }
 
 
-function install_awesome() {
-    echo "Install awesome window manager configuration ..."
-    local awesome_conf_dir="$HOME/.config/awesome"
-
-    if [ -e "${awesome_conf_dir}" -o -h "${awesome_conf_dir}" ]; then
-        rm -r "${awesome_conf_dir}"
-    fi
-
-    ln -s "${DOT_SRC}/wm/awesome" "${awesome_conf_dir}"
+function install_teamocil() {
+   echo "Install teamocil ..."
+   gem install teamocil
+   mkdir ~/.teamocil
 }
 
 
@@ -305,17 +194,13 @@ function main() {
     create_dirs
     install_packages
 
-    install_i3
-    install_awesome
-
     install_pyenv
-    install_nvm
     install_rustup
-    install_sdkman
-    install_stack
+    install_elm
 
-    install_nvim
     install_tmux
+    install_oh_my_tmux
+    install_teamocil
     install_zsh
 }
 
