@@ -189,6 +189,17 @@ function install_zsh() {
     chsh -s /bin/zsh || echo 'Shell was not changed'
 }
 
+function install_snap_and_vscode() {
+    echo "Install snap"
+    sudo dnf install snapd
+
+    echo "Enable --classic support"
+    sudo ln -s /var/lib/snapd/snap /snap
+
+    echo "Install vscode via snap"
+    sudo snap install --classic code # or code-insiders  
+}
+
 
 function main() {
     create_dirs
@@ -202,6 +213,7 @@ function main() {
     install_oh_my_tmux
     install_teamocil
     install_zsh
+    install_snap_and_vscode
 }
 
 # Run everything
